@@ -1,0 +1,54 @@
+# --- Ignore everything by default ---
+*
+
+# --- Allow .meta files everywhere (needed by Unity) ---
+!*.meta
+
+# --- Keep these main folders ---
+!Assets/
+!Packages/
+!ProjectSettings/
+!UserSettings/
+
+# --- Inside Assets, ignore everything except _Main and Scripts ---
+Assets/*
+!Assets/_Main/
+!Assets/_Main/**/
+!Assets/Scripts/
+!Assets/Scripts/**/
+
+# --- Ignore typical Unity-generated folders ---
+[Ll]ibrary/
+[Tt]emp/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+obj/
+
+# --- Ignore common Editor & system files ---
+.DS_Store
+Thumbs.db
+*.swp
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# --- Ignore large or backup packages ---
+*.unitypackage
+*.zip
+*.rar
+*.7z
+
+# --- Ignore plugin binaries (optional, can be removed if needed) ---
+*.dll
+*.so
+*.a
+*.jar
