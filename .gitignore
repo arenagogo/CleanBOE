@@ -1,0 +1,15 @@
+# --- Simpan hanya folder utama ---
+!Assets/
+!ProjectSettings/
+!UserSettings/
+!Packages/
+
+# --- Abaikan semua lainnya ---
+*
+
+# --- Tapi tetap izinkan file .gitignore ini sendiri ---
+!.gitignore
+
+# --- Optional: izinkan file README atau LICENSE ---
+!README.md
+!LICENSE
