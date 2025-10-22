@@ -340,7 +340,9 @@ MonoBehaviour:
     pluginNames:
     - UnityEditor.DeviceSimulation.ApplicationSettingsPlugin
     - UnityEditor.DeviceSimulation.ApplicationSettingsPlugin
+    - UnityEditor.DeviceSimulation.ApplicationSettingsPlugin
     pluginStates:
+    - '{}'
     - '{}'
     - '{}'
     scale: 24
