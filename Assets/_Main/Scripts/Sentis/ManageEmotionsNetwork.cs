@@ -83,41 +83,45 @@ namespace MoodMe
 
 
 
-       public IEnumerator GetValue()
-{
-    scaner.DOFade(1, 0.1f);
-    scaning.SetActive(true);
-    int count = 0;
-    bool proses = false;
+        public IEnumerator GetValue()
+        {
+            scaner.DOFade(1, 0.1f);
+            scaning.SetActive(true);
+            int count = 0;
+            bool proses = true;
 
-    while (count < 5)
-    {
-        count++;
-        yield return new WaitForSeconds(1f);
+            while (count < 5)
+            {
+                angerEstimator.waiting = false;
+                count++;
+                yield return new WaitForSeconds(1f);
 
-        // Jalankan deteksi async dan tunggu selesai
-        var detectTask = angerEstimator.DetectFaceOnceAsync();
-        yield return new WaitUntil(() => detectTask.IsCompleted);
+                // Jalankan deteksi async dan tunggu selesai
+                var detectTask = angerEstimator.DetectFaceOnceAsync();
+                yield return new WaitUntil(() => detectTask.IsCompleted);
 
-        proses = detectTask.Result;
+                yield return new WaitUntil(() => angerEstimator.waiting);
 
-        if (proses)
-            break;
-    }
+                proses = detectTask.Result;
 
-    if (proses)
-    {
-        // Debug.Log("GetValue FaceAI");
-        GetValueFaceAI();
-    }
-    else
-    {
-        AnimScore.Instance.SendDataToRTM(0, 0, 0, 0, 0, 0, 0, false);
-    }
+                if (proses)
+                    break;
+            }
 
-    scaner.DOFade(0, 0.1f);
-    scaning.SetActive(false);
-}
+            if (proses)
+            {
+                // Debug.Log("GetValue FaceAI");
+                GetValueFaceAI();
+            }
+            else
+            {
+                AnimScore.Instance.SendDataToRTM(0, 0, 0, 0, 0, 0, 0, false);
+            }
+
+            scaner.DOFade(0, 0.1f);
+            scaning.SetActive(false);
+            yield return null;
+        }
 
 
         public void GetValueFaceAI()

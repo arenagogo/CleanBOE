@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using Unity.Mathematics;
 using Unity.Sentis;
 using MoodMe;
+using DG.Tweening;
 
 public class AngerEstimator : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public class AngerEstimator : MonoBehaviour
     private float[,] anchors;
     private Tensor<float> detectorInput;
     private bool modelReady = false;
+    public bool waiting = false;
 
     async void Start()
     {
@@ -62,6 +64,26 @@ public class AngerEstimator : MonoBehaviour
         modelReady = true;
 
         Debug.Log("Face detector initialized.");
+
+        Invoke(nameof(_TestScan), 3f);
+    }
+
+
+    void _TestScan()
+    {
+        TestScan();
+    }
+
+    public CanvasGroup loadingScanFace;
+    async void TestScan()
+    {
+        loadingScanFace.DOFade(1, 0.5f);
+        loadingScanFace.interactable = true;
+        loadingScanFace.blocksRaycasts = true;
+        await DetectFaceOnceAsync();
+        loadingScanFace.DOFade(0, 0.5f).SetDelay(1f);
+        loadingScanFace.interactable = false;
+        loadingScanFace.blocksRaycasts = false;
     }
 
     /// <summary>
@@ -69,45 +91,47 @@ public class AngerEstimator : MonoBehaviour
     /// Returns true if at least one face is found.
     /// </summary>
     public async Task<bool> DetectFaceOnceAsync()
-{
-    if (!modelReady)
     {
-        Debug.LogWarning("Model not ready yet.");
-        return false;
+
+        if (!modelReady)
+        {
+            Debug.LogWarning("Model not ready yet.");
+            return false;
+        }
+
+        if (inputRawImage == null || inputRawImage.texture == null)
+        {
+            Debug.LogWarning("No texture assigned to RawImage.");
+            return false;
+        }
+
+        Texture texture = inputRawImage.texture;
+        var size = Mathf.Max(texture.width, texture.height);
+        var scale = size / (float)detectorInputSize;
+
+        var M = BlazeUtils.mul(
+            BlazeUtils.TranslationMatrix(0.5f * (new Vector2(texture.width, texture.height) + new Vector2(-size, size))),
+            BlazeUtils.ScaleMatrix(new Vector2(scale, -scale))
+        );
+
+        // Prepare tensor
+        BlazeUtils.SampleImageAffine(texture, detectorInput, M);
+        worker.Schedule(detectorInput);
+
+        // Yield satu frame agar GPU sempat selesai
+        await Task.Yield();
+
+        // Read model outputs (GPU → CPU)
+        using var indices = (worker.PeekOutput(0) as Tensor<int>).ReadbackAndClone();
+        using var scores = (worker.PeekOutput(1) as Tensor<float>).ReadbackAndClone();
+        using var boxes = (worker.PeekOutput(2) as Tensor<float>).ReadbackAndClone();
+
+        await Task.Yield(); // memberi waktu agar Unity tidak freeze
+
+        bool faceFound = indices.shape.length > 0;
+        waiting = true;
+        return faceFound;
     }
-
-    if (inputRawImage == null || inputRawImage.texture == null)
-    {
-        Debug.LogWarning("No texture assigned to RawImage.");
-        return false;
-    }
-
-    Texture texture = inputRawImage.texture;
-    var size = Mathf.Max(texture.width, texture.height);
-    var scale = size / (float)detectorInputSize;
-
-    var M = BlazeUtils.mul(
-        BlazeUtils.TranslationMatrix(0.5f * (new Vector2(texture.width, texture.height) + new Vector2(-size, size))),
-        BlazeUtils.ScaleMatrix(new Vector2(scale, -scale))
-    );
-
-    // Prepare tensor
-    BlazeUtils.SampleImageAffine(texture, detectorInput, M);
-    worker.Schedule(detectorInput);
-
-    // Yield satu frame agar GPU sempat selesai
-    await Task.Yield();
-
-    // Read model outputs (GPU → CPU)
-    using var indices = (worker.PeekOutput(0) as Tensor<int>).ReadbackAndClone();
-    using var scores = (worker.PeekOutput(1) as Tensor<float>).ReadbackAndClone();
-    using var boxes = (worker.PeekOutput(2) as Tensor<float>).ReadbackAndClone();
-
-    await Task.Yield(); // memberi waktu agar Unity tidak freeze
-
-    bool faceFound = indices.shape.length > 0;
-    return faceFound;
-}
 
 
     void OnDestroy()
