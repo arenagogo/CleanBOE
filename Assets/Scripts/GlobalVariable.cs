@@ -12,19 +12,19 @@ public static class GlobalVariable
     public static string token = "";
     public static string gender = "";
     public static string prefabname = "";
-   // public static bool isMobileBrowser = false;
+    // public static bool isMobileBrowser = false;
     public static int role;
     public static string boothCode = "";
 
-  //  public static UserData dataUSer;
-    public static string baseUrl="";
+    //  public static UserData dataUSer;
+    public static string baseUrl = "";
     public static int walletCoin;
     public static string nickNameAgora = "";
     public static string nickNameAgoraRemote = "";
     public static uint heartRate = 0;
 
-    public static string baseUrlArenaGO = "https://asia-southeast2-arenago-dev.cloudfunctions.net";
-   // public static string baseUrlArenaGO = "https://asia-southeast2-arenago-a80c0.cloudfunctions.net";
+    // public static string baseUrlArenaGO = "https://asia-southeast2-arenago-dev.cloudfunctions.net";
+    public static string baseUrlArenaGO = "https://asia-southeast1-arenago-a80c0.cloudfunctions.net";
 
     public static bool smartWatchConnected = false;
 
@@ -34,7 +34,7 @@ public static class GlobalVariable
     public static Sprite avatarRemote;
 
     public static string email_local;
-    
+
     public static GAMEMODE gamemode = GAMEMODE.FACEMODE;
 
     public static int BPM;

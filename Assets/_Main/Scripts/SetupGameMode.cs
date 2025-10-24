@@ -70,6 +70,52 @@ public class SetupGameMode : MonoBehaviour
         }
     }
 
+
+    public Toggle toggleSmartWatch;
+    public Toggle toggleFaceMode;
+    public Toggle acourntToogle;
+    public void SetGameModeFaceMode()
+    {
+        if (toggleSmartWatch.isOn)
+        {
+            return;
+        }
+        modeOption.SetValueWithoutNotify(0);
+        GlobalVariable.gamemode = GlobalVariable.GAMEMODE.FACEMODE;
+        // textDescripsiGameMode.text = gameMode[0].gameModeDescription;
+        gameModeStatustext.text = "FACE MODE";
+    }
+
+    public void SetGameModeVoiceMode()
+    {
+        modeOption.SetValueWithoutNotify(2);
+        GlobalVariable.gamemode = GlobalVariable.GAMEMODE.VOICEMODE;
+        //  textDescripsiGameMode.text = gameMode[2].gameModeDescription;
+        gameModeStatustext.text = "VOICE MODE";
+    }
+
+    public void SetGameModeSmartWatch()
+    {
+        if (toggleFaceMode.isOn)
+        {
+            return;
+        }
+
+        if (!GlobalVariable.smartWatchConnected)
+        {
+            MainMenuSnapBattle.Instance.OpenSettingExplan();
+            acourntToogle.isOn = false;
+            // toggleFaceMode.isOn = true;
+            // toggleSmartWatch.isOn = false;
+            return;
+        }
+
+        modeOption.SetValueWithoutNotify(1);
+        GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWACTH;
+        // textDescripsiGameMode.text = gameMode[1].gameModeDescription;
+        gameModeStatustext.text = "SMARTWATCH";
+    }
+
     public void SetGameModeSmartWatch(bool isConnect)
     {
         if (isConnect)
@@ -87,6 +133,29 @@ public class SetupGameMode : MonoBehaviour
             gameModeStatustext.text = "FACE MODE";
         }
 
+    }
+
+    public void ResetFaceMode()
+    {
+        if (GlobalVariable.smartWatchConnected == false)
+        {
+            GlobalVariable.gamemode = GlobalVariable.GAMEMODE.FACEMODE;
+            toggleFaceMode.isOn = true;
+            toggleSmartWatch.isOn = false;
+            modeOption.SetValueWithoutNotify(0);
+            gameModeStatustext.text = "FACE MODE";
+
+
+        }
+        else
+        {
+            if (toggleSmartWatch.isOn)
+            {
+                modeOption.SetValueWithoutNotify(1);
+                GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWACTH;
+                gameModeStatustext.text = "SMARTWATCH";
+            }
+        }
     }
 
     [Serializable]

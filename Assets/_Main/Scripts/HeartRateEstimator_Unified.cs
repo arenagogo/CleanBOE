@@ -174,29 +174,59 @@ public class HeartRateEstimator_Unified : MonoBehaviour
             yield return new WaitForSeconds(3);
             if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
             {
-                RtmChannelManager.instant.DeviceInfoLocal("Smartwatch");
-                RtmChannelManager.instant.SenDevice("Smartwatch", controller.battleId);
-                controller.SendChatText($"mamahjahat{bpmFromSmartWacth}");
-                // controller.SendChatText($"mamahjahat{emotSementara}");
-
-                if (bpmText != null)
+                if (testEmot)
                 {
-                    bpmText.text = bpmFromSmartWacth.ToString();
-                    //  bpmText.text = emotSementara.ToString();
+                    RtmChannelManager.instant.DeviceInfoLocal("Smartwatch");
+                    RtmChannelManager.instant.SenDevice("Smartwatch", controller.battleId);
+                    controller.SendChatText($"mamahjahat{emotSementara}");
+                    // controller.SendChatText($"mamahjahat{emotSementara}");
+
+                    if (bpmText != null)
+                    {
+                        bpmText.text = emotSementara.ToString();
+                        //  bpmText.text = emotSementara.ToString();
+                    }
+
+
+                    // float targetFill = Mathf.Clamp01((float)bpmFromSmartWacth / GlobalVariable.maxHeartRate);
+                    float targetFill = Mathf.Clamp01((float)emotSementara / GlobalVariable.maxHeartRate);
+                    GlobalVariable.BPM = (int)targetFill;
+                    effectManager.SetValue(targetFill);
+                    if (slidBpm != null) slidBpm.DOFillAmount(targetFill, 0.5f);
+                    //  GameScoreManager.instance.heartRateData.Add(bpmFromSmartWacth);
+                    GameScoreManager.instance.heartRateData.Add(emotSementara);
+
+
+                    //  GameScoreManager.instance.UpdateBPMLocal(bpmFromSmartWacth);
+                    GameScoreManager.instance.UpdateBPMLocal(emotSementara);
+                }
+                else
+                {
+                    RtmChannelManager.instant.DeviceInfoLocal("Smartwatch");
+                    RtmChannelManager.instant.SenDevice("Smartwatch", controller.battleId);
+                    controller.SendChatText($"mamahjahat{bpmFromSmartWacth}");
+                    // controller.SendChatText($"mamahjahat{emotSementara}");
+
+                    if (bpmText != null)
+                    {
+                        bpmText.text = bpmFromSmartWacth.ToString();
+                        //  bpmText.text = emotSementara.ToString();
+                    }
+
+
+                    float targetFill = Mathf.Clamp01((float)bpmFromSmartWacth / GlobalVariable.maxHeartRate);
+                    // float targetFill = Mathf.Clamp01((float)emotSementara / GlobalVariable.maxHeartRate);
+                    GlobalVariable.BPM = (int)targetFill;
+                    effectManager.SetValue(targetFill);
+                    if (slidBpm != null) slidBpm.DOFillAmount(targetFill, 0.5f);
+                    GameScoreManager.instance.heartRateData.Add(bpmFromSmartWacth);
+                    // GameScoreManager.instance.heartRateData.Add(emotSementara);
+
+
+                    GameScoreManager.instance.UpdateBPMLocal(bpmFromSmartWacth);
+                    // GameScoreManager.instance.UpdateBPMLocal(emotSementara);
                 }
 
-
-                // float targetFill = Mathf.Clamp01((float)bpmFromSmartWacth / GlobalVariable.maxHeartRate);
-                float targetFill = Mathf.Clamp01((float)emotSementara / GlobalVariable.maxHeartRate);
-                GlobalVariable.BPM = (int)targetFill;
-                effectManager.SetValue(targetFill);
-                if (slidBpm != null) slidBpm.DOFillAmount(targetFill, 0.5f);
-                GameScoreManager.instance.heartRateData.Add(bpmFromSmartWacth);
-                // GameScoreManager.instance.heartRateData.Add(emotSementara);
-
-
-                GameScoreManager.instance.UpdateBPMLocal(bpmFromSmartWacth);
-                // GameScoreManager.instance.UpdateBPMLocal(emotSementara);
             }
             else
             {
@@ -222,6 +252,7 @@ public class HeartRateEstimator_Unified : MonoBehaviour
     }
 
     public int emotSementara = 40;
+    public bool testEmot = false;
     //public EmotionsManager emotionsManager;
 
     private void OnBPMChangedFromSmartWatch(string bpmString)

@@ -39,6 +39,7 @@ public class HyperRateManager : MonoBehaviour
     public GameObject buttonDisconnet;
 
     public GameObject iconSmatrWatchConenected;
+    public SetupGameMode setupGameMode;
 
     public string BPM
     {
@@ -120,6 +121,9 @@ public class HyperRateManager : MonoBehaviour
                 buttonDisconnet.SetActive(true);
                 mainMenuSelecting.buttonConnect.gameObject.SetActive(false);
                 iconSmatrWatchConenected.SetActive(true);
+                // setupGameMode.SetGameModeSmartWatch();
+                // setupGameMode.toggleFaceMode.isOn = false;
+                // setupGameMode.toggleSmartWatch.isOn = true;
                 // mainMenuSelecting.inputIdSmartWach.text = "";
                 // SetupGameMode.instance.SetGameModeSmartWatch(true);
             }
