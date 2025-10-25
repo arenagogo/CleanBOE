@@ -65,26 +65,26 @@ public class AngerEstimator : MonoBehaviour
 
         Debug.Log("Face detector initialized.");
 
-        Invoke(nameof(_TestScan), 3f);
+        // Invoke(nameof(_TestScan), 3f);
     }
 
 
     void _TestScan()
     {
-        TestScan();
+        // TestScan();
     }
 
     public CanvasGroup loadingScanFace;
-    async void TestScan()
-    {
-        loadingScanFace.DOFade(1, 0.5f);
-        loadingScanFace.interactable = true;
-        loadingScanFace.blocksRaycasts = true;
-        await DetectFaceOnceAsync();
-        loadingScanFace.DOFade(0, 0.5f).SetDelay(1f);
-        loadingScanFace.interactable = false;
-        loadingScanFace.blocksRaycasts = false;
-    }
+    // async void TestScan()
+    // {
+    //     loadingScanFace.DOFade(1, 0.5f);
+    //     loadingScanFace.interactable = true;
+    //     loadingScanFace.blocksRaycasts = true;
+    //     await DetectFaceOnceAsync();
+    //     loadingScanFace.DOFade(0, 0.5f).SetDelay(1f);
+    //     loadingScanFace.interactable = false;
+    //     loadingScanFace.blocksRaycasts = false;
+    // }
 
     /// <summary>
     /// Detects face once from the current RawImage texture.

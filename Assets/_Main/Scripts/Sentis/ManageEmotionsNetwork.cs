@@ -87,64 +87,37 @@ namespace MoodMe
         {
             scaner.DOFade(1, 0.1f);
             scaning.SetActive(true);
-            int count = 0;
-            bool proses = true;
 
-            while (count < 5)
-            {
-                angerEstimator.waiting = false;
-                count++;
-                yield return new WaitForSeconds(1f);
+            // tunggu sebentar supaya animasi fade sempat tampil
+            yield return new WaitForSeconds(0.2f);
 
-                // Jalankan deteksi async dan tunggu selesai
-                var detectTask = angerEstimator.DetectFaceOnceAsync();
-                yield return new WaitUntil(() => detectTask.IsCompleted);
-
-                yield return new WaitUntil(() => angerEstimator.waiting);
-
-                proses = detectTask.Result;
-
-                if (proses)
-                    break;
-            }
-
-            if (proses)
-            {
-                // Debug.Log("GetValue FaceAI");
-                GetValueFaceAI();
-            }
-            else
-            {
-                AnimScore.Instance.SendDataToRTM(0, 0, 0, 0, 0, 0, 0, false);
-            }
+            // Jalankan inference async tanpa freeze
+            yield return StartCoroutine(GetValueFaceAIAsync());
 
             scaner.DOFade(0, 0.1f);
             scaning.SetActive(false);
-            yield return null;
         }
 
-
-        public void GetValueFaceAI()
+        private IEnumerator GetValueFaceAIAsync()
         {
             if (sourceImage == null || sourceImage.texture == null)
             {
                 Debug.LogError("❌ RawImage belum ada Texture!");
-                return;
+                yield break;
             }
 
             Texture srcTex = sourceImage.texture;
             Texture2D tex;
 
-            // kalau texture sudah Texture2D langsung cast
-            if (srcTex is Texture2D)
+            // 1️⃣ Convert ke Texture2D
+            if (srcTex is Texture2D t2d)
             {
-                tex = UnityEngine.Object.Instantiate(srcTex) as Texture2D;
+                tex = Instantiate(t2d);
             }
-            // kalau texture ternyata RenderTexture, convert dulu ke Texture2D
             else if (srcTex is RenderTexture rt)
             {
                 RenderTexture.active = rt;
-                tex = new Texture2D(ImageNetworkWidth, ImageNetworkHeight, TextureFormat.R8, false);
+                tex = new Texture2D(rt.width, rt.height, TextureFormat.R8, false);
                 tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
                 tex.Apply();
                 RenderTexture.active = null;
@@ -152,12 +125,15 @@ namespace MoodMe
             else
             {
                 Debug.LogError("❌ Source texture di RawImage bukan Texture2D atau RenderTexture.");
-                return;
+                yield break;
             }
+
+            // beri waktu sejenak agar frame tidak freeze
+            yield return null;
 
             try
             {
-                // ambil pixel grayscale
+                // 2️⃣ Konversi pixel ke float array (bisa berat, beri jeda)
                 Color32[] pixels = tex.GetPixels32();
                 float[] inputArray = new float[ImageNetworkWidth * ImageNetworkHeight];
 
@@ -166,73 +142,175 @@ namespace MoodMe
                     for (int x = 0; x < ImageNetworkWidth; x++)
                     {
                         int idx = y * ImageNetworkWidth + x;
-                        float gray = pixels[idx].r; // grayscale dari channel R
+                        float gray = pixels[idx].r;
 
-                        if (NormalizeToMinusOneToOne)
-                            inputArray[idx] = (gray - 127.5f) / 127.5f; // [-1,1]
-                        else
-                            inputArray[idx] = gray / 255f; // [0,1]
+                        inputArray[idx] = NormalizeToMinusOneToOne
+                            ? (gray - 127.5f) / 127.5f
+                            : gray / 255f;
                     }
+
+                    // beri jeda setiap beberapa baris agar frame tetap lancar
+                    if (y % 8 == 0)
+                        yield return null;
                 }
 
-                // shape NCHW: [1,1,48,48]
+                // 3️⃣ Buat tensor untuk Sentis
                 var shape = new TensorShape(1, ChannelCount, ImageNetworkHeight, ImageNetworkWidth);
-
                 using (var inputTensor = new Tensor<float>(shape, inputArray))
                 {
                     worker.Schedule(inputTensor);
+
+                    // tunggu GPU selesai tanpa block frame
+                    yield return new WaitUntil(() => worker.PeekOutput() != null);
 
                     using (var outputTensor = worker.PeekOutput() as Tensor<float>)
                     {
                         if (outputTensor == null)
                         {
                             Debug.LogError("❌ Output tensor null, inference gagal.");
-                            return;
+                            yield break;
                         }
 
                         using (var clonedTensor = outputTensor.ReadbackAndClone())
                         {
                             float[] results = clonedTensor.AsReadOnlyNativeArray().ToArray();
 
-                            // Softmax normalisasi
+                            // 4️⃣ Softmax normalisasi
                             float maxLogit = results.Max();
                             float sumExp = results.Sum(v => Mathf.Exp(v - maxLogit));
                             for (int i = 0; i < results.Length; i++)
-                            {
                                 results[i] = Mathf.Exp(results[i] - maxLogit) / sumExp;
-                            }
 
+                            // 5️⃣ Simpan hasil
                             int count = Mathf.Min(results.Length, EmotionsLabelFull.Length);
-
                             for (int i = 0; i < count; i++)
-                            {
-                                string label = EmotionsLabelFull[i];
-                                DetectedEmotions[label] = results[i];
-                            }
+                                DetectedEmotions[EmotionsLabelFull[i]] = results[i];
 
-                            // update inspector
                             for (int j = 0; j < EmotionsInspector.Count; j++)
-                            {
-                                string key = EmotionsInspector[j].label;
-                                if (DetectedEmotions.ContainsKey(key))
-                                    EmotionsInspector[j].value = DetectedEmotions[key];
-                            }
+                                EmotionsInspector[j].value = DetectedEmotions[EmotionsInspector[j].label];
 
-                            // ✅ Panggil SendScore setelah hasil siap
+                            // 6️⃣ Kirim hasil ke sistem lain
                             SendScore();
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"❌ Error saat proses GetValue: {ex.Message}");
             }
             finally
             {
                 Destroy(tex);
             }
         }
+
+
+        // public void GetValueFaceAI()
+        // {
+        //     if (sourceImage == null || sourceImage.texture == null)
+        //     {
+        //         Debug.LogError("❌ RawImage belum ada Texture!");
+        //         return;
+        //     }
+
+        //     Texture srcTex = sourceImage.texture;
+        //     Texture2D tex;
+
+        //     // kalau texture sudah Texture2D langsung cast
+        //     if (srcTex is Texture2D)
+        //     {
+        //         tex = UnityEngine.Object.Instantiate(srcTex) as Texture2D;
+        //     }
+        //     // kalau texture ternyata RenderTexture, convert dulu ke Texture2D
+        //     else if (srcTex is RenderTexture rt)
+        //     {
+        //         RenderTexture.active = rt;
+        //         tex = new Texture2D(ImageNetworkWidth, ImageNetworkHeight, TextureFormat.R8, false);
+        //         tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        //         tex.Apply();
+        //         RenderTexture.active = null;
+        //     }
+        //     else
+        //     {
+        //         Debug.LogError("❌ Source texture di RawImage bukan Texture2D atau RenderTexture.");
+        //         return;
+        //     }
+
+        //     try
+        //     {
+        //         // ambil pixel grayscale
+        //         Color32[] pixels = tex.GetPixels32();
+        //         float[] inputArray = new float[ImageNetworkWidth * ImageNetworkHeight];
+
+        //         for (int y = 0; y < ImageNetworkHeight; y++)
+        //         {
+        //             for (int x = 0; x < ImageNetworkWidth; x++)
+        //             {
+        //                 int idx = y * ImageNetworkWidth + x;
+        //                 float gray = pixels[idx].r; // grayscale dari channel R
+
+        //                 if (NormalizeToMinusOneToOne)
+        //                     inputArray[idx] = (gray - 127.5f) / 127.5f; // [-1,1]
+        //                 else
+        //                     inputArray[idx] = gray / 255f; // [0,1]
+        //             }
+        //         }
+
+        //         // shape NCHW: [1,1,48,48]
+        //         var shape = new TensorShape(1, ChannelCount, ImageNetworkHeight, ImageNetworkWidth);
+
+        //         using (var inputTensor = new Tensor<float>(shape, inputArray))
+        //         {
+        //             worker.Schedule(inputTensor);
+
+        //             using (var outputTensor = worker.PeekOutput() as Tensor<float>)
+        //             {
+        //                 if (outputTensor == null)
+        //                 {
+        //                     Debug.LogError("❌ Output tensor null, inference gagal.");
+        //                     return;
+        //                 }
+
+        //                 using (var clonedTensor = outputTensor.ReadbackAndClone())
+        //                 {
+        //                     float[] results = clonedTensor.AsReadOnlyNativeArray().ToArray();
+
+        //                     // Softmax normalisasi
+        //                     float maxLogit = results.Max();
+        //                     float sumExp = results.Sum(v => Mathf.Exp(v - maxLogit));
+        //                     for (int i = 0; i < results.Length; i++)
+        //                     {
+        //                         results[i] = Mathf.Exp(results[i] - maxLogit) / sumExp;
+        //                     }
+
+        //                     int count = Mathf.Min(results.Length, EmotionsLabelFull.Length);
+
+        //                     for (int i = 0; i < count; i++)
+        //                     {
+        //                         string label = EmotionsLabelFull[i];
+        //                         DetectedEmotions[label] = results[i];
+        //                     }
+
+        //                     // update inspector
+        //                     for (int j = 0; j < EmotionsInspector.Count; j++)
+        //                     {
+        //                         string key = EmotionsInspector[j].label;
+        //                         if (DetectedEmotions.ContainsKey(key))
+        //                             EmotionsInspector[j].value = DetectedEmotions[key];
+        //                     }
+
+        //                     // ✅ Panggil SendScore setelah hasil siap
+        //                     SendScore();
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Debug.LogError($"❌ Error saat proses GetValue: {ex.Message}");
+        //     }
+        //     finally
+        //     {
+        //         Destroy(tex);
+        //     }
+        // }
 
         // 🔹 Kirim hasil emosi ke sistem lain (misal UI)
         void SendScore()
