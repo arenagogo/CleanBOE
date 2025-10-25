@@ -7,7 +7,7 @@ using Unity.Sentis;
 using MoodMe;
 using DG.Tweening;
 
-public class AngerEstimator : MonoBehaviour
+public class AngerEstimatorX : MonoBehaviour
 {
     [Header("Input")]
     public RawImage inputRawImage; // Assign RawImage that contains the texture source

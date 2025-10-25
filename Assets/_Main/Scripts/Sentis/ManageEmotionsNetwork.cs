@@ -23,7 +23,7 @@ namespace MoodMe
         [Header("Model")]
         public ModelAsset EmotionsNetwork;
         [Header("AngerEstimator")]
-        public AngerEstimator angerEstimator;
+        // public AngerEstimator angerEstimator;
 
         [Header("Input RawImage")]
         public RawImage sourceImage; // ganti dari RenderTexture ke RawImage
