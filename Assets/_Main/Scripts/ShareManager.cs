@@ -9,37 +9,37 @@ using UnityEngine.UI;
 
 public class ShareManager : MonoBehaviour
 {
-    //[SerializeField] private LogView _logView;
-   // [SerializeField] string _title;
-    [SerializeField] private Button _share;
+  //[SerializeField] private LogView _logView;
+  // [SerializeField] string _title;
+  [SerializeField] private Button _share;
 
-    [TextArea]
-    public string textToShare;
+  [TextArea(3, 10)]
+  public string textToShare;
 
-    private void Awake()
+  private void Awake()
+  {
+    _share.onClick.AddListener(ShareClicked);
+    //  _logView.LogMessage($"{_title} started.");
+  }
+
+  private void OnDestroy() => _share.onClick.RemoveAllListeners();
+
+  [Obsolete]
+  private void ShareClicked()
+  {
+    if (!Share.IsPlatformSupported)
     {
-        _share.onClick.AddListener(ShareClicked);
-      //  _logView.LogMessage($"{_title} started.");
+      // _logView.LogError("Share: platform not supported");
+      return;
     }
 
-    private void OnDestroy() => _share.onClick.RemoveAllListeners();
+    var items = new List<string>();
+    items.Add(textToShare);
 
-    [Obsolete]
-    private void ShareClicked()
+    //  _logView.LogMessage("Share: requested");
+    Share.Items(items, success =>
     {
-        if (!Share.IsPlatformSupported)
-        {
-           // _logView.LogError("Share: platform not supported");
-            return;
-        }
-
-        var items = new List<string>();
-        items.Add(textToShare);
-
-      //  _logView.LogMessage("Share: requested");
-        Share.Items(items, success =>
-        {
-            Debug.Log($"Share: {(success ? "success" : "failed")}");
-        });
-    }
+      Debug.Log($"Share: {(success ? "success" : "failed")}");
+    });
+  }
 }
