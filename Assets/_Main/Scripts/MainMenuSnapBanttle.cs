@@ -41,6 +41,7 @@ public class MainMenuSnapBattle : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        // toogleHome.isOn = true;
     }
 
     public void OnRestart()
@@ -82,7 +83,7 @@ public class MainMenuSnapBattle : MonoBehaviour
 
         if (statusLogin)
         {
-            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
             {
                 OpenAccounMenu(true);
             }
@@ -97,17 +98,39 @@ public class MainMenuSnapBattle : MonoBehaviour
         }
     }
 
+    public CanvasGroup NologinHistoryHomeCVS;
+    public CanvasGroup UserOnlineListCVS;
+
     public void OpenHome()
     {
         if (!toogleHome.isOn)
             return;
 
+        if (statusLogin)
+        {
+            NologinHistoryHomeCVS.alpha = 0;
+            NologinHistoryHomeCVS.interactable = false;
+            NologinHistoryHomeCVS.blocksRaycasts = false;
+            UserOnlineListCVS.alpha = 1;
+            UserOnlineListCVS.interactable = true;
+            UserOnlineListCVS.blocksRaycasts = true;
+            // UserOnlineManager.instance.CheckUserOnline();
+        }
+        else
+        {
+            NologinHistoryHomeCVS.alpha = 0;
+            NologinHistoryHomeCVS.interactable = false;
+            NologinHistoryHomeCVS.blocksRaycasts = false;
+            UserOnlineListCVS.alpha = 1;
+            UserOnlineListCVS.interactable = true;
+            UserOnlineListCVS.blocksRaycasts = true;
+        }
         SHOWCanvasGroup("LogoOnMenu");
     }
 
     public void SuccessLogin()
     {
-        SHOWCanvasGroup("OnLogin");
+        // SHOWCanvasGroup("OnLogin");
         SetProfile();
     }
 
@@ -120,7 +143,7 @@ public class MainMenuSnapBattle : MonoBehaviour
 
         if (statusLogin)
         {
-            if (GlobalVariable.smartWatchConnected == false && GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+            if (GlobalVariable.smartWatchConnected == false && GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
             {
                 SHOWCanvasGroup("MenuTypeGame");
                 return;
@@ -219,6 +242,10 @@ public class MainMenuSnapBattle : MonoBehaviour
     public void OpenSettingExplan()
     {
         toogleSetting.isOn = false;
+        toogleAccount.isOn = false;
+        toogleHome.isOn = false;
+        toogleHistory.isOn = false;
+        toogleTutor.isOn = true;
         SHOWCanvasGroup("Tutorial");
     }
 

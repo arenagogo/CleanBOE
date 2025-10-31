@@ -18,20 +18,18 @@ public class IOSPermissionSimple : MonoBehaviour
 
     private void Awake()
     {
-        // Cek kalau sudah pernah diminta
         alreadyRequested = PlayerPrefs.HasKey("status_permission_key");
 
         if (CheckPermissionGranted())
         {
-            // Izin sudah diberikan → langsung sembunyikan UI & buka kamera
             HidePermissionUI();
             OpenCame();
         }
         else
         {
             ShowPermissionUI(alreadyRequested
-                ? "Camera/Mic access denied. Please enable in Settings."
-                : "This game requires permission to use the camera and microphone.");
+                ? "Camera and microphone access are required to analyze your emotions during gameplay. Please enable access in Settings to continue."
+                : "Emotion Duel uses your camera and microphone to analyze your emotions in real time. Your data is used only during gameplay and is never stored.");
         }
     }
 
@@ -52,23 +50,16 @@ public class IOSPermissionSimple : MonoBehaviour
 #if UNITY_IOS && !UNITY_EDITOR
         if (alreadyRequested)
         {
+            // Langsung buka setting iOS
             Application.OpenURL("app-settings:");
         }
         else
         {
             StartCoroutine(RequestPermissionsIOS());
         }
+
 #elif UNITY_ANDROID && !UNITY_EDITOR
-        if (alreadyRequested &&
-            (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera) ||
-             !UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Microphone)))
-        {
-            Application.OpenURL("package:" + Application.identifier);
-        }
-        else
-        {
-            StartCoroutine(RequestPermissionsAndroid());
-        }
+        StartCoroutine(RequestPermissionsAndroid());
 #else
         Debug.Log("In Editor: Simulating permission granted.");
         HidePermissionUI();
@@ -79,32 +70,27 @@ public class IOSPermissionSimple : MonoBehaviour
 #if UNITY_IOS && !UNITY_EDITOR
     private IEnumerator RequestPermissionsIOS()
     {
-        // Minta izin kamera
         if (!Application.HasUserAuthorization(UserAuthorization.WebCam))
-        {
             yield return Application.RequestUserAuthorization(UserAuthorization.WebCam);
-        }
 
-        // Minta izin mic
         if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
-        {
             yield return Application.RequestUserAuthorization(UserAuthorization.Microphone);
-        }
 
-        // Tandai sudah diminta
         PlayerPrefs.SetInt("status_permission_key", 1);
         PlayerPrefs.Save();
         alreadyRequested = true;
 
-        // Cek ulang hasilnya
         if (CheckPermissionGranted())
         {
             HidePermissionUI();
-            OpenCame(); // ← otomatis buka kamera
+            OpenCame();
         }
         else
         {
-            ShowPermissionUI("Camera/Mic access denied. Please enable in Settings.");
+            ShowPermissionUI("Camera and microphone access are required to analyze your emotions during gameplay. Please enable access in Settings to continue.");
+            // Ubah fungsi tombol jadi langsung buka setting
+            requestButton.onClick.RemoveAllListeners();
+            requestButton.onClick.AddListener(() => Application.OpenURL("app-settings:"));
         }
     }
 #endif
@@ -115,7 +101,6 @@ public class IOSPermissionSimple : MonoBehaviour
         UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Camera);
         UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Microphone);
 
-        // Tunggu beberapa saat untuk respon user
         yield return new WaitForSeconds(1.2f);
 
         PlayerPrefs.SetInt("status_permission_key", 1);
@@ -125,11 +110,14 @@ public class IOSPermissionSimple : MonoBehaviour
         if (CheckPermissionGranted())
         {
             HidePermissionUI();
-            OpenCame(); // ← otomatis buka kamera
+            OpenCame();
         }
         else
         {
-            ShowPermissionUI("Camera/Mic access denied. Please enable in Settings.");
+            // Jika ditolak, tampilkan pesan dan disable tombol
+            ShowPermissionUI("Camera and microphone access are required to analyze your emotions during gameplay. Please enable access in Settings to continue.");
+            requestButton.interactable = false;
+            requestButton.image.color = new Color(1f, 1f, 1f, 0.5f); // sedikit transparan agar terlihat nonaktif
         }
     }
 #endif
@@ -143,7 +131,6 @@ public class IOSPermissionSimple : MonoBehaviour
         return Application.HasUserAuthorization(UserAuthorization.WebCam) &&
                Application.HasUserAuthorization(UserAuthorization.Microphone);
 #else
-        // Di Editor selalu true
         return true;
 #endif
     }

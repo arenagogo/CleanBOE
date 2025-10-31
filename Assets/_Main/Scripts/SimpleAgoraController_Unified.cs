@@ -280,7 +280,11 @@ public class SimpleAgoraController_Unified : MonoBehaviour
                     GlobalVariable.email_local = data.data.email;
                     Debug.Log(data.data.email);
                     MainMenuSnapBattle.Instance.statusLogin = true;
+
                     MainMenuSnapBattle.Instance.CreateListHistory();
+                    MainMenuSnapBattle.Instance.toogleHome.isOn = true;
+                    MainMenuSnapBattle.Instance.OpenHome();
+
                     // MainMenuSnapBattle.Instance.SetProfile();
                 }
                 catch (Exception e)
@@ -332,6 +336,11 @@ public class SimpleAgoraController_Unified : MonoBehaviour
         RtmChannelManager.instant.SetChanelRTM(data.data.profile.username);
         FriendListsManager.instance.GetFriendslist();
         MainMenuSnapBattle.Instance.CreateListHistory();
+        MainMenuSnapBattle.Instance.toogleHome.isOn = true;
+
+        MainMenuSnapBattle.Instance.OpenHome();
+
+
 
 
         MainMenuSnapBattle.Instance.GetTotalScore((total) =>
@@ -459,6 +468,7 @@ public class SimpleAgoraController_Unified : MonoBehaviour
         // Tampilkan panel video call
         SwitchPanel(cvsPanelViCall, cvsPanelLobby);
         INVITE.Instance.JoinChaelInvite();
+        GlobalVariable.onPlaying = true;
     }
 
     public void LeaveChannel(bool isNormal)
@@ -493,6 +503,8 @@ public class SimpleAgoraController_Unified : MonoBehaviour
             _rtc.LeaveChannel();
             LeaveChanelUser();
         }
+
+        GlobalVariable.onPlaying = false;
     }
 
 
@@ -945,6 +957,12 @@ public class SimpleAgoraController_Unified : MonoBehaviour
         StartCoroutine(GetJsonRoutine(apiUrl, customToken, onSuccess, onError));
     }
 
+    public void GetDataRoutine2(string apiUrl, string customToken, Action<string> onSuccess, Action<string> onError = null)
+    {
+        // Loading.instance.ShowLoading();
+        StartCoroutine(GetJsonRoutine(apiUrl, customToken, onSuccess, onError));
+    }
+
     private IEnumerator GetJsonRoutine(string apiUrl, string token, Action<string> onSuccess, Action<string> onError)
     {
         using (UnityWebRequest req = UnityWebRequest.Get(apiUrl))
@@ -982,6 +1000,48 @@ public class SimpleAgoraController_Unified : MonoBehaviour
             }
         }
     }
+
+    public void DeleteData(string apiUrl, string customToken, Action<string> onSuccess, Action<string> onError = null)
+    {
+        Loading.instance.ShowLoading();
+        StartCoroutine(DeleteJsonRoutine(apiUrl, customToken, onSuccess, onError));
+    }
+
+    private IEnumerator DeleteJsonRoutine(string apiUrl, string token, Action<string> onSuccess, Action<string> onError)
+    {
+        using (UnityWebRequest req = UnityWebRequest.Delete(apiUrl))
+        {
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+
+            if (!string.IsNullOrEmpty(token))
+                req.SetRequestHeader("Authorization", "Bearer " + token);
+
+            yield return req.SendWebRequest();
+
+#if UNITY_2020_2_OR_NEWER
+            if (req.result == UnityWebRequest.Result.Success)
+#else
+        if (!req.isNetworkError && !req.isHttpError)
+#endif
+            {
+                onSuccess?.Invoke(req.downloadHandler.text);
+                Loading.instance.HideLoading();
+            }
+            else
+            {
+                onError?.Invoke(req.error);
+                Loading.instance.ShowErrorText(req.error);
+
+                if (onError != null && req.error.Contains("Unauthorized"))
+                {
+                    PlayerPrefs.DeleteKey("dataJwt");
+                    SceneManager.LoadSceneAsync("MainSceneAgora");
+                }
+            }
+        }
+    }
+
 
     public Transform posListRoom;
     public GameObject prefabRoom;

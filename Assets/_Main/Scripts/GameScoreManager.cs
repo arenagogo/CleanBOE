@@ -165,7 +165,7 @@ public class GameScoreManager : MonoBehaviour
                 ButtonScanFace.SetActive(false);
         }
 
-        if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+        if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
         {
             while (remainingTime > 0)
             {

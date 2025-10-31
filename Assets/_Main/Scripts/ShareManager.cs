@@ -24,6 +24,11 @@ public class ShareManager : MonoBehaviour
 
   private void OnDestroy() => _share.onClick.RemoveAllListeners();
 
+  public void ShareDiKlik()
+  {
+    ShareClicked();
+  }
+
   [Obsolete]
   private void ShareClicked()
   {

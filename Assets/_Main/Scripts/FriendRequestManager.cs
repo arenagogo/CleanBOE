@@ -7,7 +7,7 @@ using TMPro;
 public class FriendRequestManager : MonoBehaviour
 {
     public Transform posListFriendReq;
-    public GameObject prefabFriendReq;  
+    public GameObject prefabFriendReq;
     public SimpleAgoraController_Unified controler;
     public RtmChannelManager rtmChannelManager;
     public Sprite defaultAvatar;
@@ -40,7 +40,7 @@ public class FriendRequestManager : MonoBehaviour
 
     public void GetFriendRequest()
     {
-        if(posListFriendReq.childCount > 0)
+        if (posListFriendReq.childCount > 0)
         {
             for (int i = posListFriendReq.childCount - 1; i >= 0; i--)
             {
@@ -64,7 +64,8 @@ public class FriendRequestManager : MonoBehaviour
                     Debug.LogError("Failed to friend request data: " + e.Message);
                 }
             },
-            (error) => {
+            (error) =>
+            {
                 Debug.LogError("Failed to friend request data: " + error);
             }
         );
@@ -100,7 +101,8 @@ public class FriendRequestManager : MonoBehaviour
                     }
                 }
                 Button btnAdd = go.GetComponent<UserList>().btnAddFriend;
-                btnAdd.onClick.AddListener(() => {
+                btnAdd.onClick.AddListener(() =>
+                {
                     AddFriend(friendReq.data.users[i].uid);
                     btnAdd.interactable = false;
                 });

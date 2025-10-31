@@ -145,7 +145,7 @@ public class HyperRateManager : MonoBehaviour
 
         while (timer < seconds)
         {
-            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH) yield break; // sudah connect, batal timeout
+            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH) yield break; // sudah connect, batal timeout
             timer += Time.deltaTime;
             yield return null;
         }

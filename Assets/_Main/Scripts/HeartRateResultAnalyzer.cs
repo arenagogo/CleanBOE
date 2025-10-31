@@ -28,7 +28,7 @@ public class HeartRateResultAnalyzer : MonoBehaviour
             string result = AnimScore.Instance.AnalyzePlayerEmotionProfile();
             textTitle.text = result;
         }
-        else if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+        else if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
         {
             string result = GetEmotionResult(heartRateData);
             textTitle.text = result;

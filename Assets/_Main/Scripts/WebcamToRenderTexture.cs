@@ -27,14 +27,36 @@ public class WebcamToRenderTexture : MonoBehaviour
     private WebCamTexture webcamTexture;
     private bool initialized = false;
 
-    // === PUBLIC METHODS ===
+    public bool isMainScene = false;
 
-    /// <summary>
-    /// Start webcam manually.
-    /// </summary>
+    //  public static WebcamToRenderTexture Instance { get; private set; }
+
+    // void Awake()
+    // {
+    //     if (Instance == null)
+    //     {
+    //         Instance = this;
+    //         DontDestroyOnLoad(gameObject);
+    //     }
+    //     else if (Instance != this)
+    //     {
+    //         Debug.Log("Duplicate WebcamToRenderTexture detected — destroying duplicate instance.");
+    //         Destroy(gameObject);
+    //         return;
+    //     }
+    // }
+
+    void Start()
+    {
+        if (isMainScene)
+        {
+            StartWebcam();
+        }
+    }
+
     public void StartWebcam()
     {
-        Debug.Log("Starwebcame xx");
+        Debug.Log("Starting webcam...");
         if (initialized)
         {
             Debug.Log("⚠ Webcam already running!");
@@ -44,9 +66,6 @@ public class WebcamToRenderTexture : MonoBehaviour
         StartCoroutine(StartWebcamRoutine());
     }
 
-    /// <summary>
-    /// Stop webcam manually.
-    /// </summary>
     public void StopWebcam()
     {
         if (webcamTexture != null && webcamTexture.isPlaying)
@@ -57,13 +76,10 @@ public class WebcamToRenderTexture : MonoBehaviour
         initialized = false;
     }
 
-    // === PRIVATE COROUTINE ===
-
     private IEnumerator StartWebcamRoutine()
     {
         Debug.Log("📱 Initializing Webcam Script...");
 
-        // Step 1: Request permission (Android only)
         yield return RequestAndroidPermission();
 
 #if !UNITY_EDITOR && PLATFORM_ANDROID
@@ -74,14 +90,12 @@ public class WebcamToRenderTexture : MonoBehaviour
         }
 #endif
 
-        // Step 2: Verify target texture
         if (targetTexture == null)
         {
             Debug.LogError("❌ Target RenderTexture not assigned!");
             yield break;
         }
 
-        // Step 3: Initialize webcam
         yield return InitializeWebcam();
     }
 
@@ -150,5 +164,17 @@ public class WebcamToRenderTexture : MonoBehaviour
 #else
         yield return null;
 #endif
+    }
+
+    private void OnDestroy()
+    {
+        Debug.Log("🧹 OnDestroy() called — stopping webcam...");
+        StopWebcam();
+    }
+
+    private void OnApplicationQuit()
+    {
+        Debug.Log("🚪 Application quitting — stopping webcam...");
+        StopWebcam();
     }
 }

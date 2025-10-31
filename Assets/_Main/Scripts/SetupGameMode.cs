@@ -29,7 +29,7 @@ public class SetupGameMode : MonoBehaviour
 
     public void SetButtonPlay()
     {
-        if (GlobalVariable.smartWatchConnected == false && GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+        if (GlobalVariable.smartWatchConnected == false && GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
         {
             MainMenuSnapBattle.Instance.OpenSettingButton();
             return;
@@ -48,7 +48,7 @@ public class SetupGameMode : MonoBehaviour
                 gameModeStatustext.text = "FACE MODE";
                 break;
             case 1:
-                GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWACTH;
+                GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWATCH;
                 textDescripsiGameMode.text = gameMode[1].gameModeDescription;
                 gameModeStatustext.text = "SMARTWATCH";
                 heartRateVisualizer.SetupGameMode();
@@ -68,6 +68,8 @@ public class SetupGameMode : MonoBehaviour
                 gameModeStatustext.text = "FACE MODE";
                 break;
         }
+
+        UserOnlineManager.instance.BroadCastMode(false);
     }
 
 
@@ -84,6 +86,7 @@ public class SetupGameMode : MonoBehaviour
         GlobalVariable.gamemode = GlobalVariable.GAMEMODE.FACEMODE;
         // textDescripsiGameMode.text = gameMode[0].gameModeDescription;
         gameModeStatustext.text = "FACE MODE";
+        UserOnlineManager.instance.BroadCastMode(false);
     }
 
     public void SetGameModeVoiceMode()
@@ -111,9 +114,10 @@ public class SetupGameMode : MonoBehaviour
         }
 
         modeOption.SetValueWithoutNotify(1);
-        GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWACTH;
+        GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWATCH;
         // textDescripsiGameMode.text = gameMode[1].gameModeDescription;
         gameModeStatustext.text = "SMARTWATCH";
+        UserOnlineManager.instance.BroadCastMode(false);
     }
 
     public void SetGameModeSmartWatch(bool isConnect)
@@ -121,7 +125,7 @@ public class SetupGameMode : MonoBehaviour
         if (isConnect)
         {
             modeOption.SetValueWithoutNotify(1);
-            GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWACTH;
+            GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWATCH;
             textDescripsiGameMode.text = gameMode[1].gameModeDescription;
             gameModeStatustext.text = "SMARTWATCH";
         }
@@ -132,7 +136,7 @@ public class SetupGameMode : MonoBehaviour
             textDescripsiGameMode.text = gameMode[0].gameModeDescription;
             gameModeStatustext.text = "FACE MODE";
         }
-
+        UserOnlineManager.instance.BroadCastMode(false);
     }
 
     public void ResetFaceMode()
@@ -152,10 +156,11 @@ public class SetupGameMode : MonoBehaviour
             if (toggleSmartWatch.isOn)
             {
                 modeOption.SetValueWithoutNotify(1);
-                GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWACTH;
+                GlobalVariable.gamemode = GlobalVariable.GAMEMODE.SMARTWATCH;
                 gameModeStatustext.text = "SMARTWATCH";
             }
         }
+        UserOnlineManager.instance.BroadCastMode(false);
     }
 
     [Serializable]

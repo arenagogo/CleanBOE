@@ -55,17 +55,18 @@ public class RtmChannelManager : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(CheckUserOnline());
+        // StartCoroutine(CheckUserOnline());
+        StartCoroutine(VerifyJoinedStatus());
     }
 
-    IEnumerator CheckUserOnline()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(5f);
-            PrintOnlineUsers();
-        }
-    }
+    // IEnumerator CheckUserOnline()
+    // {
+    //     while (true)
+    //     {
+    //         yield return new WaitForSeconds(5f);
+    //         PrintOnlineUsers();
+    //     }
+    // }
 
 
 
@@ -126,10 +127,11 @@ public class RtmChannelManager : MonoBehaviour
         if (subscribeResult.Status.Error)
         {
             Debug.LogError($"[RTM] Gagal Subscribe ke Channel {channelName}: {subscribeResult.Status.Reason}");
+            isJoinedChannel = false;
             return;
         }
         Debug.Log($"[RTM] Berhasil Subscribe ke Channel: {channelName}");
-
+        isJoinedChannel = true;
         await GetCurrentMembers();
     }
 
@@ -153,8 +155,11 @@ public class RtmChannelManager : MonoBehaviour
         foreach (var member in result.Response.UserStateList)
         {
             onlineUser.Add(member.userId);
+            UserOnlineManager.instance.AddUserOnline(member.userId);
             Debug.Log($"[RTM] Member ditemukan: {member.userId}");
         }
+
+        // UserOnlineManager.instance.GetListFollowingAsync();
     }
 
     public void PrintOnlineUsers()
@@ -162,9 +167,11 @@ public class RtmChannelManager : MonoBehaviour
         Debug.Log("[RTM] PrintOnlineUsers()");
         foreach (var member in onlineUser)
         {
-            Debug.Log($"[RTM] OnlineUser: {member}");
+            // Debug.Log($"[RTM] OnlineUser: {member}");
             OnlineUsers(member);
         }
+
+        UserOnlineManager.instance.BroadCastMode(false);
     }
 
     private void OnPresenceEvent(PresenceEvent e)
@@ -177,6 +184,7 @@ public class RtmChannelManager : MonoBehaviour
             if (!onlineUser.Contains(e.publisher))
             {
                 onlineUser.Add(e.publisher);
+                UserOnlineManager.instance.AddUserOnline(e.publisher);
             }
             OnlineUsers(e.publisher);
         }
@@ -184,6 +192,7 @@ public class RtmChannelManager : MonoBehaviour
         {
             Debug.Log($"[RTM] Pengguna Keluar: {e.publisher}");
             onlineUser.Remove(e.publisher);
+            UserOnlineManager.instance.RemoveUserOnline(e.publisher);
             OfflineUsers(e.publisher);
         }
     }
@@ -202,7 +211,7 @@ public class RtmChannelManager : MonoBehaviour
 
     private void OnlineUsers(string OnlineUser)
     {
-        Debug.Log($"[RTM] OnlineUsers: {OnlineUser}");
+        //  Debug.Log($"[RTM] OnlineUsers: {OnlineUser}");
         foreach (GameObject g in friendListsManager.friendsDataPrefabs)
         {
             if (g.name == OnlineUser)
@@ -215,6 +224,26 @@ public class RtmChannelManager : MonoBehaviour
     public string nameFirendInvite = "";
 
     //=================INVITE========
+
+    public async void BroadCastStatus(string username, string data)
+    {
+        if (isJoinedChannel == false)
+        {
+            // Debug.LogWarning("[RTM] Tidak dapat mengirim BroadCastStatus karena belum bergabung di channel.");
+            return;
+        }
+        bool success = await SendInviteCommandAsync("broadCastStatus", username, data, data, data);
+
+        if (success)
+        {
+            Debug.Log($"[RTM] broadCastStatus! {data}");
+        }
+        else
+        {
+            Debug.LogError("[RTM] Gagal broadCastStatus.");
+        }
+    }
+
     public async void InviteFriend(string friendUsername, string myname, string avatarUrl, string gamemode)
     {
         //  Debug.Log($"[RTM] InviteFriend dipanggil: target={friendUsername}, myname={myname}");
@@ -333,9 +362,10 @@ public class RtmChannelManager : MonoBehaviour
     {
         // Debug.Log($"[RTM] SendInviteCommandAsync dipanggil, target={recipientId}, myname={myname}");
 
+
         if (rtmClient == null)
         {
-            Debug.LogError($"[RTM] RTM Client belum diinisialisasi. Gagal mengirim {typeMessage}");
+            // Debug.LogError($"[RTM] RTM Client belum diinisialisasi. Gagal mengirim {typeMessage}");
             return false;
         }
 
@@ -360,11 +390,11 @@ public class RtmChannelManager : MonoBehaviour
         //  Debug.Log($"[RTM] PublishAsync result: Error={result.Status.Error}, Reason={result.Status.Reason}");
         if (result.Status.Error)
         {
-            Debug.LogError($"[RTM] Gagal mengirim invite ke {recipientId}: {result.Status.Reason}");
+            Debug.LogError($"[RTM] failed {typeMessage} {recipientId} ");
             return false;
         }
 
-        Debug.Log($"[RTM] Berhasil mengirim invite ke {recipientId}");
+        Debug.Log($"[RTM] {typeMessage} {recipientId} ");
         // friendListsManager.IncomingInvite(myname, recipientId);
         return true;
     }
@@ -456,6 +486,10 @@ public class RtmChannelManager : MonoBehaviour
                        GoScanFace();
                    });
                     }
+                    break;
+                case "broadCastStatus":
+                    Debug.Log($"[RTM] Menerima BroadCastStatus dari {receivedCommand.senderId}");
+                    UserOnlineManager.instance.ReceivindBroadCastStatus(receivedCommand.senderId, receivedCommand.payload);
                     break;
 
 
@@ -563,6 +597,12 @@ public class RtmChannelManager : MonoBehaviour
         }
     }
 
+    public void QuitDleteAccount()
+    {
+        ForceQuit();
+        PlayerPrefs.DeleteKey("dataJwt");
+    }
+
     async void ForceQuit()
     {
         if (rtmClient != null)
@@ -584,32 +624,86 @@ public class RtmChannelManager : MonoBehaviour
     }
 
     private bool onBackground = false;
+    private DateTime pauseTime;
+    private const float maxPauseDuration = 60f; // 1 menit
 
-    private void OnApplicationPause(bool pauseStatus)
+    private async Task OnApplicationPause(bool pauseStatus)
     {
-        //if (pauseStatus)
-        //{
-        //    ForceQuit();
-        //    controler.FoceQuit();
-        //    onBackground = true;
-        //}
-        //else
-        //{
-        //    if(onBackground)
-        //    {
-        //        SceneManager.LoadScene("MainSceneAgora");
-        //    }
+        if (pauseStatus)
+        {
+            // Aplikasi masuk ke background
+            onBackground = true;
+            pauseTime = DateTime.Now;
+            Debug.Log("App paused at: " + pauseTime);
+        }
+        else
+        {
+            // Aplikasi kembali aktif
+            if (onBackground)
+            {
+                TimeSpan duration = DateTime.Now - pauseTime;
+                Debug.Log("App resumed after " + duration.TotalSeconds + " seconds");
 
-        //}
+                if (duration.TotalSeconds > maxPauseDuration)
+                {
+                    Debug.Log("App paused > 1 minute. Reloading scene...");
+                    ForceQuit();
+                    SceneManager.LoadScene("HOME"); // ganti sesuai nama scene-mu
+                }
+
+                onBackground = false;
+            }
+        }
+    }
+    [SerializeField] private bool isJoinedChannel = false;
+    private IEnumerator VerifyJoinedStatus()
+    {
+        yield return new WaitForSeconds(10f); // tunggu sebentar agar subscribe selesai
+
+        if (!onlineUser.Contains(controler.data.data.profile.username))
+        {
+            Debug.LogWarning("[RTM] Tidak berhasil masuk ke ChanelBattleOfEmotiom setelah 3 detik. Restarting scene...");
+            StartCoroutine(RestartSceneRoutine());
+        }
+        else
+        {
+            Debug.Log("[RTM] Confirmed in ChanelBattleOfEmotiom ✅");
+        }
     }
 
-    [Serializable]
-    public class RtmCommand
+    private IEnumerator RestartSceneRoutine()
     {
-        public string commandType;
-        public string senderId;
-        public string recipientId;
-        public string payload;
-        public string gamemode;
+        yield return new WaitForSeconds(1.5f);
+        ForceQuit();
     }
+}
+
+
+
+// private void OnApplicationPause(bool pauseStatus)
+// {
+//     //if (pauseStatus)
+//     //{
+//     //    ForceQuit();
+//     //    controler.FoceQuit();
+//     //    onBackground = true;
+//     //}
+//     //else
+//     //{
+//     //    if(onBackground)
+//     //    {
+//     //        SceneManager.LoadScene("MainSceneAgora");
+//     //    }
+
+//     //}
+// }
+
+[Serializable]
+public class RtmCommand
+{
+    public string commandType;
+    public string senderId;
+    public string recipientId;
+    public string payload;
+    public string gamemode;
 }

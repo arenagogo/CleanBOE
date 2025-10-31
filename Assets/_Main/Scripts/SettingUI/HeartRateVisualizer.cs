@@ -56,7 +56,7 @@ public class HeartRateVisualizer : MonoBehaviour
 
     private void HandleBPMChanged(string _bpm)
     {
-        if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+        if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
         {
             if (float.TryParse(_bpm, out float bpmValue))
             {
@@ -94,7 +94,7 @@ public class HeartRateVisualizer : MonoBehaviour
 
     void Update()
     {
-        if (GlobalVariable.gamemode != GlobalVariable.GAMEMODE.SMARTWACTH)
+        if (GlobalVariable.gamemode != GlobalVariable.GAMEMODE.SMARTWATCH)
         {
             cvs.alpha = 0;
             transform.localPosition = curPos * 100;

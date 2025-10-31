@@ -172,7 +172,7 @@ public class HeartRateEstimator_Unified : MonoBehaviour
         while (isVideoActive)
         {
             yield return new WaitForSeconds(3);
-            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
             {
                 if (testEmot)
                 {

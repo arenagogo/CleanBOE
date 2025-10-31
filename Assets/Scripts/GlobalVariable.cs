@@ -43,9 +43,11 @@ public static class GlobalVariable
     public enum GAMEMODE
     {
         FACEMODE,
-        SMARTWACTH,
+        SMARTWATCH,
         VOICEMODE
     }
+
+    // SMARTWACTH
 
     //public static List<GameObject> onlineFriendsObject;
 

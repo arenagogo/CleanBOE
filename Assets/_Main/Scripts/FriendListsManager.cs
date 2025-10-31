@@ -19,6 +19,8 @@ public class FriendListsManager : MonoBehaviour
     public CanvasGroup show;
     public Toggle toggleFriendReq;
 
+    public FriendList friendList;
+
     public void OpenFriendRequest()
     {
         if (toggleFriendReq.isOn)
@@ -55,7 +57,7 @@ public class FriendListsManager : MonoBehaviour
     public void GetFriendslist()
     {
         string apiMutualFriens = GlobalVariable.baseUrlArenaGO + "/nestjsApi/api/friend-list/mutual-friends";
-        FriendList friendList = new FriendList();
+        friendList = new FriendList();
 
         controler.GetDataRoutine(apiMutualFriens, controler.data.data.accessToken,
             (json) =>
@@ -87,6 +89,7 @@ public class FriendListsManager : MonoBehaviour
     IEnumerator CreateFriendLists(FriendList friend)
     {
         friendsDataPrefabs.Clear();
+        // UserOnlineManager.instance.friendOnlineList.Clear();
         if (posFrienlist.childCount != 0)
         {
             for (int i = 0; i < posFrienlist.childCount; i++)
@@ -100,6 +103,7 @@ public class FriendListsManager : MonoBehaviour
             int i = ii;
             GameObject go = Instantiate(frienlist, posFrienlist);
             go.name = friend.data.users[i].name;
+            //  UserOnlineManager.instance.friendOnlineList.Add(friend.data.users[i].name);
             FriendListDataPrefab friendListDataPrefab = go.GetComponent<FriendListDataPrefab>();
 
             string urlImg = friend.data.users[i].profileImage.ToString();
@@ -150,7 +154,7 @@ public class FriendListsManager : MonoBehaviour
         string gm = "";
         if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.FACEMODE)
             gm = "facemode";
-        else if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWACTH)
+        else if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.SMARTWATCH)
             gm = "smartwatch";
         else
             gm = "";
@@ -166,7 +170,7 @@ public class FriendListsManager : MonoBehaviour
         if (gamemode == "facemode")
             gm = GlobalVariable.GAMEMODE.FACEMODE;
         else if (gamemode == "smartwatch")
-            gm = GlobalVariable.GAMEMODE.SMARTWACTH;
+            gm = GlobalVariable.GAMEMODE.SMARTWATCH;
         else
             gm = GlobalVariable.GAMEMODE.VOICEMODE;
 

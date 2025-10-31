@@ -33,7 +33,7 @@ public class LoginSystem : MonoBehaviour
         string email = inputEmailRegister.text.Trim();
         string password = inputPasswordRegister.text;
         string repeatPassword = inputRepeatPasswordRegister.text.Trim();
-        string phone = inputPhoneNumberRegister.text.Trim();
+        // string phone = inputPhoneNumberRegister.text.Trim();
         string username = inputUsername.text.Trim();
 
         // Clear all validation messages
@@ -89,12 +89,12 @@ public class LoginSystem : MonoBehaviour
         }
 
         // === Phone Number Validation ===
-        if (string.IsNullOrEmpty(phone))
-        {
-            Debug.LogError("Phone number cannot be empty");
-            notifValPhoneNumber.text = "Phone number cannot be empty";
-            return false;
-        }
+        // if (string.IsNullOrEmpty(phone))
+        // {
+        //     Debug.LogError("Phone number cannot be empty");
+        //     notifValPhoneNumber.text = "Phone number cannot be empty";
+        //     return false;
+        // }
 
         if (string.IsNullOrEmpty(username))
         {
@@ -126,19 +126,19 @@ public class LoginSystem : MonoBehaviour
 
 
 
-        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^08[1-9][0-9]{7,10}$"))
-        {
-            Debug.LogError("Invalid phone number format");
-            notifValPhoneNumber.text = "Phone number must start with 08 and contain 10–13 digits (e.g., 08xxxxxxxxx)";
-            return false;
-        }
+        // if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^08[1-9][0-9]{7,10}$"))
+        // {
+        //     Debug.LogError("Invalid phone number format");
+        //     notifValPhoneNumber.text = "Phone number must start with 08 and contain 10–13 digits (e.g., 08xxxxxxxxx)";
+        //     return false;
+        // }
 
-        if (phone.Length < 9 || phone.Length > 15)
-        {
-            Debug.LogError("Invalid phone number length");
-            notifValPhoneNumber.text = "Phone number must be between 9–15 digits";
-            return false;
-        }
+        // if (phone.Length < 9 || phone.Length > 15)
+        // {
+        //     Debug.LogError("Invalid phone number length");
+        //     notifValPhoneNumber.text = "Phone number must be between 9–15 digits";
+        //     return false;
+        // }
 
         // === Username Validation ===
 
@@ -269,7 +269,7 @@ public class LoginSystem : MonoBehaviour
     public TMP_InputField inputEmailRegister;
     public TMP_InputField inputPasswordRegister;
     public TMP_InputField inputRepeatPasswordRegister;
-    public TMP_InputField inputPhoneNumberRegister;
+    // public TMP_InputField inputPhoneNumberRegister;
     public TMP_InputField inputUsername;
 
     public TextMeshProUGUI notifValEmail;
@@ -358,15 +358,17 @@ public class LoginSystem : MonoBehaviour
     {
         public string email;
         public string password;
-        public string phoneNumber;
+        // public string phoneNumber;
         // public string displayName;
         public string username;
-        public RegisterStructur(string _email, string _password, string _phoneNumber, string _name)
+        public RegisterStructur(string _email, string _password, string _name)
         {
             email = _email;
             password = _password;
-            phoneNumber = _phoneNumber;
+            // phoneNumber = _phoneNumber;
             username = _name;
+
+
         }
     }
 
@@ -384,7 +386,7 @@ public class LoginSystem : MonoBehaviour
         string apiRegisterUrl = GlobalVariable.baseUrlArenaGO + "/nestjsApi/api/auth/register";
 
         // Payload body JSON
-        RegisterStructur payload = new RegisterStructur(inputEmailRegister.text, inputPasswordRegister.text, inputPhoneNumberRegister.text, inputUsername.text);
+        RegisterStructur payload = new RegisterStructur(inputEmailRegister.text, inputPasswordRegister.text, inputUsername.text);
 
         string jsonBody = JsonUtility.ToJson(payload);
 
@@ -435,7 +437,7 @@ public class LoginSystem : MonoBehaviour
             inputEmailRegister.text = string.Empty;
             inputPasswordRegister.text = string.Empty;
             inputRepeatPasswordRegister.text = string.Empty;
-            inputPhoneNumberRegister.text = string.Empty;
+            //  inputPhoneNumberRegister.text = string.Empty;
             inputUsername.text = string.Empty;
 
             notifValEmail.text = string.Empty;
