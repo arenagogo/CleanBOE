@@ -27,7 +27,7 @@ public class WebcamToRenderTexture : MonoBehaviour
     private WebCamTexture webcamTexture;
     private bool initialized = false;
 
-    public bool isMainScene = false;
+    // public bool isMainScene = false;
 
     //  public static WebcamToRenderTexture Instance { get; private set; }
 
@@ -46,13 +46,13 @@ public class WebcamToRenderTexture : MonoBehaviour
     //     }
     // }
 
-    void Start()
-    {
-        if (isMainScene)
-        {
-            StartWebcam();
-        }
-    }
+    // void Start()
+    // {
+    //     if (isMainScene)
+    //     {
+    //         StartWebcam();
+    //     }
+    // }
 
     public void StartWebcam()
     {

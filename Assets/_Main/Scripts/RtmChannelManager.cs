@@ -244,21 +244,35 @@ public class RtmChannelManager : MonoBehaviour
         }
     }
 
+
+    public CanvasGroup cvsPermistion;
+
     public async void InviteFriend(string friendUsername, string myname, string avatarUrl, string gamemode)
     {
-        //  Debug.Log($"[RTM] InviteFriend dipanggil: target={friendUsername}, myname={myname}");
-        nameFirendInvite = friendUsername;
-        bool success = await SendInviteCommandAsync("invite", friendUsername, myname, avatarUrl, gamemode);
-
-        if (success)
+        if (IOSPermissionSimple.instance.CheckPermissionGranted())
         {
-            Debug.Log($"[RTM] Undangan berhasil dikirim! {gamemode}");
+            nameFirendInvite = friendUsername;
+            bool success = await SendInviteCommandAsync("invite", friendUsername, myname, avatarUrl, gamemode);
+
+            if (success)
+            {
+                Debug.Log($"[RTM] Undangan berhasil dikirim! {gamemode}");
+            }
+            else
+            {
+                Debug.LogError("[RTM] Gagal mengirim undangan.");
+            }
         }
         else
         {
-            Debug.LogError("[RTM] Gagal mengirim undangan.");
+            cvsPermistion.alpha = 1f;
+            cvsPermistion.interactable = true;
+            cvsPermistion.blocksRaycasts = true;
         }
+        //  Debug.Log($"[RTM] InviteFriend dipanggil: target={friendUsername}, myname={myname}");
+
     }
+
 
     public async void AcceptInvite(string roomName, string nameAccept, string battleId)
     {

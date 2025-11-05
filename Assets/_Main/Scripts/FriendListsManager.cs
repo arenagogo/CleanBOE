@@ -164,6 +164,9 @@ public class FriendListsManager : MonoBehaviour
 
     public void IncomingInvite(string inviting, string invited, string avatarUrl, string gamemode)
     {
+        if (IOSPermissionSimple.instance.CheckPermissionGranted() == false)
+            return;
+
 
         GlobalVariable.GAMEMODE gm = GlobalVariable.GAMEMODE.FACEMODE;
 
@@ -186,7 +189,7 @@ public class FriendListsManager : MonoBehaviour
                 {
                     Debug.Log($"{inviting} mengundang sudah difilter {invited} urlAvatar {avatarUrl}");
                     StartCoroutine(INVITE.Instance.SetInviteOpen(inviting, "invite you to play", avatarUrl));
-                    GlobalVariable.STATUS = Status.INVITED;
+                    //  GlobalVariable.STATUS = Status.INVITED;
                 }
             }
 

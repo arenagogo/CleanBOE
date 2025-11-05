@@ -9,6 +9,7 @@ using UnityEngine.iOS;
 
 public class IOSPermissionSimple : MonoBehaviour
 {
+    public static IOSPermissionSimple instance;
     public WebcamToRenderTexture webcamToRenderTexture;
     public Button requestButton;
     public TextMeshProUGUI statusText;
@@ -17,6 +18,24 @@ public class IOSPermissionSimple : MonoBehaviour
     private bool alreadyRequested;
 
     private void Awake()
+    {
+        instance = this;
+
+        alreadyRequested = PlayerPrefs.HasKey("status_permission_key");
+
+        if (CheckPermissionGranted())
+        {
+            HidePermissionUI();
+        }
+        else
+        {
+            ShowPermissionUI(alreadyRequested
+                ? "Camera and microphone access are required to analyze your emotions during gameplay. Please enable access in Settings to continue."
+                : "Emotion Duel uses your camera and microphone to analyze your emotions in real time. Your data is used only during gameplay and is never stored.");
+        }
+    }
+
+    public void OpenCamera()
     {
         alreadyRequested = PlayerPrefs.HasKey("status_permission_key");
 
@@ -87,10 +106,11 @@ public class IOSPermissionSimple : MonoBehaviour
         }
         else
         {
-            ShowPermissionUI("Camera and microphone access are required to analyze your emotions during gameplay. Please enable access in Settings to continue.");
+            ShowPermissionUI("This feature uses your camera and microphone to detect your emotions during gameplay. Access is currently disabled — you can enable it anytime from Settings to experience full features.");
             // Ubah fungsi tombol jadi langsung buka setting
             requestButton.onClick.RemoveAllListeners();
-            requestButton.onClick.AddListener(() => Application.OpenURL("app-settings:"));
+            requestButton.gameObject.SetActive(false);
+           // requestButton.onClick.AddListener(() => Application.OpenURL("app-settings:"));
         }
     }
 #endif
@@ -116,13 +136,13 @@ public class IOSPermissionSimple : MonoBehaviour
         {
             // Jika ditolak, tampilkan pesan dan disable tombol
             ShowPermissionUI("Camera and microphone access are required to analyze your emotions during gameplay. Please enable access in Settings to continue.");
-            requestButton.interactable = false;
-            requestButton.image.color = new Color(1f, 1f, 1f, 0.5f); // sedikit transparan agar terlihat nonaktif
+           requestButton.onClick.RemoveAllListeners();
+            requestButton.gameObject.SetActive(false);
         }
     }
 #endif
 
-    private bool CheckPermissionGranted()
+    public bool CheckPermissionGranted()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
         return UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera) &&

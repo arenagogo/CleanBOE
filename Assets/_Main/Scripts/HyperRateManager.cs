@@ -96,7 +96,7 @@ public class HyperRateManager : MonoBehaviour
             mainMenuSelecting.statusDevice.text = "Connection closed!";
             mainMenuSelecting.statusDevice.color = Color.red;
             mainMenuSelecting.buttonConnect.interactable = true;
-            // PlayerPrefs.DeleteKey(keyIdKey);
+            PlayerPrefs.DeleteKey(keyIdKey);
             mainMenuSelecting.inputIdSmartWach.text = "";
             GlobalVariable.smartWatchConnected = false;
             iconSmatrWatchConenected.SetActive(false);
