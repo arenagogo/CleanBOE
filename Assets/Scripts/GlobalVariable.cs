@@ -40,6 +40,8 @@ public static class GlobalVariable
     public static int BPM;
     public static bool onPlaying;
 
+    public static bool OnInitFaceScane;
+
     public enum GAMEMODE
     {
         FACEMODE,

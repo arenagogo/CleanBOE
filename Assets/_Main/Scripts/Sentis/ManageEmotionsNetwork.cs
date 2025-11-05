@@ -40,10 +40,15 @@ namespace MoodMe
         [Header("Output (Inspector View)")]
         public List<EmotionValue> EmotionsInspector = new List<EmotionValue>();
 
-        public float[] GetCurrentEmotionValues => DetectedEmotions.Values.ToArray();
+        public float[] GetCurrentEmotionValues => (DetectedEmotions != null) ? DetectedEmotions.Values.ToArray() : Array.Empty<float>();
 
         private Worker worker;
-        private static Dictionary<string, float> DetectedEmotions;
+        // initialize to avoid null-ref if property accessed early
+        private static Dictionary<string, float> DetectedEmotions = new Dictionary<string, float>();
+
+        private Tensor<float> inputTensor;
+        // private readonly string[] EmotionsLabelFull = { ... };
+        // private Worker worker;
 
         public Image scaner;
         //  public ScanerAnim scanerAnim;
@@ -59,6 +64,7 @@ namespace MoodMe
             scaner.DOFade(0, 0);
         }
 
+        [Obsolete]
         void Start()
         {
             var runtimeModel = ModelLoader.Load(EmotionsNetwork);
@@ -74,6 +80,13 @@ namespace MoodMe
 
             if (sourceImage == null)
                 Debug.LogWarning("⚠️ sourceImage belum di-assign, pastikan RawImage punya Texture.");
+
+            if (GlobalVariable.OnInitFaceScane == false)
+            {
+                StartCoroutine(GetValueFaceAIAsync());
+                Debug.Log("INI AWAL");
+            }
+
         }
 
         public void ScanFaceRemote()
@@ -81,7 +94,7 @@ namespace MoodMe
             RtmChannelManager.instant.GoScanFaceRemote();
         }
 
-
+        [Obsolete]
 
         public IEnumerator GetValue()
         {
@@ -98,6 +111,7 @@ namespace MoodMe
             scaning.SetActive(false);
         }
 
+        [Obsolete]
         private IEnumerator GetValueFaceAIAsync()
         {
             if (sourceImage == null || sourceImage.texture == null)
@@ -106,99 +120,66 @@ namespace MoodMe
                 yield break;
             }
 
-            Texture srcTex = sourceImage.texture;
-            Texture2D tex;
+            // 1. Tentukan parameter normalisasi
+            // (Nilai ini diambil dari 'NormalizeToMinusOneToOne' di Inspector)
+            float meanValue = NormalizeToMinusOneToOne ? 127.5f : 0.0f;
+            float stdValue = NormalizeToMinusOneToOne ? 127.5f : 255.0f;
 
-            // 1️⃣ Convert ke Texture2D
-            if (srcTex is Texture2D t2d)
-            {
-                tex = Instantiate(t2d);
-            }
-            else if (srcTex is RenderTexture rt)
-            {
-                RenderTexture.active = rt;
-                tex = new Texture2D(rt.width, rt.height, TextureFormat.R8, false);
-                tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-                tex.Apply();
-                RenderTexture.active = null;
-            }
-            else
-            {
-                Debug.LogError("❌ Source texture di RawImage bukan Texture2D atau RenderTexture.");
-                yield break;
-            }
+            // 2. Buat/reuse tensor input (NCHW)
+            var shape = new TensorShape(1, ChannelCount, ImageNetworkHeight, ImageNetworkWidth);
+            if (inputTensor == null)
+                inputTensor = new Tensor<float>(shape);
 
-            // beri waktu sejenak agar frame tidak freeze
-            yield return null;
+            // 3. KONVERSI TEKSTUR → Tensor (GPU path when available)
+            // Build a TextureTransform using the public fluent API (SetDimensions) and reuse the preallocated inputTensor.
+            var transform = new TextureTransform().SetDimensions(ImageNetworkWidth, ImageNetworkHeight, ChannelCount);
+            // Note: we don't set internal channelScale/bias here; Sentis will infer reasonable defaults.
 
-            try
+            // Perform conversion directly into the preallocated inputTensor (avoids allocations and uses GPU when possible)
+            TextureConverter.ToTensor(sourceImage.texture, inputTensor, transform);
+
+            // 4. JALANKAN MODEL
+            worker.Schedule(inputTensor);
+
+            // 5. TUNGGU HASIL (ASYNC)
+            yield return new WaitUntil(() => worker.PeekOutput() != null);
+
+            // 6. BACA HASIL
+            using (var outputTensor = worker.PeekOutput() as Tensor<float>)
             {
-                // 2️⃣ Konversi pixel ke float array (bisa berat, beri jeda)
-                Color32[] pixels = tex.GetPixels32();
-                float[] inputArray = new float[ImageNetworkWidth * ImageNetworkHeight];
-
-                for (int y = 0; y < ImageNetworkHeight; y++)
+                if (outputTensor == null)
                 {
-                    for (int x = 0; x < ImageNetworkWidth; x++)
-                    {
-                        int idx = y * ImageNetworkWidth + x;
-                        float gray = pixels[idx].r;
-
-                        inputArray[idx] = NormalizeToMinusOneToOne
-                            ? (gray - 127.5f) / 127.5f
-                            : gray / 255f;
-                    }
-
-                    // beri jeda setiap beberapa baris agar frame tetap lancar
-                    if (y % 8 == 0)
-                        yield return null;
+                    Debug.LogError("❌ Output tensor null, inference gagal.");
+                    yield break;
                 }
 
-                // 3️⃣ Buat tensor untuk Sentis
-                var shape = new TensorShape(1, ChannelCount, ImageNetworkHeight, ImageNetworkWidth);
-                using (var inputTensor = new Tensor<float>(shape, inputArray))
+                // Ambil data dari GPU
+                using (var clonedTensor = outputTensor.ReadbackAndClone())
                 {
-                    worker.Schedule(inputTensor);
+                    float[] results = clonedTensor.AsReadOnlyNativeArray().ToArray();
 
-                    // tunggu GPU selesai tanpa block frame
-                    yield return new WaitUntil(() => worker.PeekOutput() != null);
+                    // 7. SOFTMAX
+                    float maxLogit = results.Max();
+                    float sumExp = results.Sum(v => Mathf.Exp(v - maxLogit));
+                    for (int i = 0; i < results.Length; i++)
+                        results[i] = Mathf.Exp(results[i] - maxLogit) / sumExp;
 
-                    using (var outputTensor = worker.PeekOutput() as Tensor<float>)
-                    {
-                        if (outputTensor == null)
-                        {
-                            Debug.LogError("❌ Output tensor null, inference gagal.");
-                            yield break;
-                        }
+                    // 8. SIMPAN HASIL
+                    int count = Mathf.Min(results.Length, EmotionsLabelFull.Length);
+                    for (int i = 0; i < count; i++)
+                        DetectedEmotions[EmotionsLabelFull[i]] = results[i];
 
-                        using (var clonedTensor = outputTensor.ReadbackAndClone())
-                        {
-                            float[] results = clonedTensor.AsReadOnlyNativeArray().ToArray();
+                    for (int j = 0; j < EmotionsInspector.Count; j++)
+                        EmotionsInspector[j].value = DetectedEmotions[EmotionsInspector[j].label];
 
-                            // 4️⃣ Softmax normalisasi
-                            float maxLogit = results.Max();
-                            float sumExp = results.Sum(v => Mathf.Exp(v - maxLogit));
-                            for (int i = 0; i < results.Length; i++)
-                                results[i] = Mathf.Exp(results[i] - maxLogit) / sumExp;
+                    // 9. KIRIM HASIL
+                    if (GlobalVariable.OnInitFaceScane)
+                        SendScore();
 
-                            // 5️⃣ Simpan hasil
-                            int count = Mathf.Min(results.Length, EmotionsLabelFull.Length);
-                            for (int i = 0; i < count; i++)
-                                DetectedEmotions[EmotionsLabelFull[i]] = results[i];
-
-                            for (int j = 0; j < EmotionsInspector.Count; j++)
-                                EmotionsInspector[j].value = DetectedEmotions[EmotionsInspector[j].label];
-
-                            // 6️⃣ Kirim hasil ke sistem lain
-                            SendScore();
-                        }
-                    }
+                    GlobalVariable.OnInitFaceScane = true;
                 }
             }
-            finally
-            {
-                Destroy(tex);
-            }
+            // Tidak ada lagi 'Destroy(tex)', jadi tidak ada GC spike!
         }
 
 
@@ -324,7 +305,8 @@ namespace MoodMe
             float neutral = EmotionsInspector[6].value * 100;
 
             // contoh: kirim ke animasi atau UI
-            AnimScore.Instance.SendDataToRTM(angry, disgust, fear, happy, sad, surprise, neutral, true);
+            if (GlobalVariable.gamemode == GlobalVariable.GAMEMODE.FACEMODE)
+                AnimScore.Instance.SendDataToRTM(angry, disgust, fear, happy, sad, surprise, neutral, true);
 
             // Debug.Log($"✅ Emotion sent → Angry:{angry:F2}, Sad:{sad:F2}, Neutral:{neutral:F2}");
         }
