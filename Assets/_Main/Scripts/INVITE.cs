@@ -24,7 +24,7 @@ public class INVITE : MonoBehaviour
         cvs = GetComponent<CanvasGroup>();
     }
 
-    public IEnumerator SetInviteOpen(string _username,string _message, string avatarUrl)
+    public IEnumerator SetInviteOpen(string _username, string _message, string avatarUrl)
     {
 
         controler.GetSpriteFromURL(avatarUrl, (downloadedSprite) =>
@@ -58,6 +58,7 @@ public class INVITE : MonoBehaviour
         rtmChannelManager.AcceptInvite(roomName, controler.data.data.profile.username, battleId);
         HideInvite();
         heartRateEstimator.StartVideo();
+        IOSPermissionSimple.instance.OpenCame();
     }
 
     public void RejectInvit()

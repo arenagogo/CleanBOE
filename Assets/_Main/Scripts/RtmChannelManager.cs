@@ -262,6 +262,8 @@ public class RtmChannelManager : MonoBehaviour
             {
                 Debug.LogError("[RTM] Gagal mengirim undangan.");
             }
+
+            IOSPermissionSimple.instance.OpenCame();
         }
         else
         {
