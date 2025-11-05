@@ -603,7 +603,7 @@ public class RtmChannelManager : MonoBehaviour
                 rtmClient.Dispose();
                 heartRateEstimator.StopVideo();
                 PlayerPrefs.DeleteKey("dataJwt");
-                SceneManager.LoadScene("MainSceneAgora");
+                SceneManager.LoadScene("HOME");
                 Debug.Log("[RTM] Client sudah dibersihkan (logout, unsubscribe, dispose).");
             }
             catch (Exception ex)
