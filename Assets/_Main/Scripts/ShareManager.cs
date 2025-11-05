@@ -16,6 +16,7 @@ public class ShareManager : MonoBehaviour
   [TextArea(3, 10)]
   public string textToShare;
 
+  [Obsolete]
   private void Awake()
   {
     _share.onClick.AddListener(ShareClicked);
@@ -24,6 +25,7 @@ public class ShareManager : MonoBehaviour
 
   private void OnDestroy() => _share.onClick.RemoveAllListeners();
 
+  [Obsolete]
   public void ShareDiKlik()
   {
     ShareClicked();
@@ -39,7 +41,16 @@ public class ShareManager : MonoBehaviour
     }
 
     var items = new List<string>();
-    items.Add(textToShare);
+
+    // Adjust link by device
+    string linkToShare = textToShare;
+#if UNITY_ANDROID
+    linkToShare = "https://play.google.com/store/apps?id=com.EmotionDuel.ArenaGo";
+#elif UNITY_IOS
+    linkToShare = "https://apps.apple.com/app/id6753614362";
+#endif
+
+    items.Add(linkToShare);
 
     //  _logView.LogMessage("Share: requested");
     Share.Items(items, success =>
