@@ -6,8 +6,6 @@ using System.Text.RegularExpressions;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Windows;
 
 public class GameScoreManager : MonoBehaviour
 {

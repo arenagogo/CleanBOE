@@ -29,20 +29,20 @@ public class UserOnline : MonoBehaviour
 
     void Update()
     {
-        if (timerOffline <= 0f)
-        {
-            isOnline = false;
-            readyToPlayStatus.text = "Offline";
-            readyToPlayStatus.color = Color.black;
-            actionButton.interactable = false;
-            readyToPlayStatus.color = Color.black;
-            ReadyStatusIcon.color = Color.black;
-            buttonText.text = "OFFLINE";
-        }
-        else
-        {
-            timerOffline -= Time.deltaTime;
-        }
+        // if (timerOffline <= 0f)
+        // {
+        //     isOnline = false;
+        //     readyToPlayStatus.text = "Offline";
+        //     readyToPlayStatus.color = Color.black;
+        //     actionButton.interactable = false;
+        //     readyToPlayStatus.color = Color.black;
+        //     ReadyStatusIcon.color = Color.black;
+        //     buttonText.text = "OFFLINE";
+        // }
+        // else
+        // {
+        //     timerOffline -= Time.deltaTime;
+        // }
     }
 
 }

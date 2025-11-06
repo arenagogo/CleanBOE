@@ -37,7 +37,8 @@ public class UserOnlineManager : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(UpdateRefresUserOnlineList());
+        // StartCoroutine(UpdateRefresUserOnlineList());
+        RefresUserOnlineList();
         // CheckUserOnline();
     }
 
@@ -89,6 +90,10 @@ public class UserOnlineManager : MonoBehaviour
 
     }
 
+    public void Refress()
+    {
+        RefresUserOnlineList();
+    }
 
     async void RefresUserOnlineList()
     {
@@ -216,7 +221,8 @@ public class UserOnlineManager : MonoBehaviour
                     if (downloadedSprite != null)
                     {
                         avtr = downloadedSprite;
-                        userOnline.icon.sprite = avtr;
+                        if (userOnline)
+                            userOnline.icon.sprite = avtr;
                     }
                     else
                     {

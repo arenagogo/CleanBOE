@@ -671,6 +671,13 @@ public class RtmChannelManager : MonoBehaviour
             }
         }
     }
+
+    public void BackToHome()
+    {
+        Debug.Log("App paused > 1 minute. Reloading scene...");
+        ForceQuit();
+        SceneManager.LoadScene("HOME"); // ganti sesuai nama scene-mu
+    }
     [SerializeField] private bool isJoinedChannel = false;
     private IEnumerator VerifyJoinedStatus()
     {
