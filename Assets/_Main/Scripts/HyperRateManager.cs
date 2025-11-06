@@ -7,9 +7,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class HyperRateManager : MonoBehaviour
 {
+    public bool testing = false;
     public static HyperRateManager Instance;
     public MainMenuSelecting mainMenuSelecting;
     // Put your websocket Token ID here
@@ -108,10 +110,15 @@ public class HyperRateManager : MonoBehaviour
             var message = System.Text.Encoding.UTF8.GetString(bytes);
             var msg = JObject.Parse(message);
 
+            int bpmFake = Random.Range(80, 90);
+
             if (msg["event"].ToString() == "hr_update")
             {
                 hyperRateValue = (string)msg["payload"]["hr"];
-                bpm = HyperRateValue();
+                if (testing)
+                    bpm = bpmFake.ToString();
+                else
+                    bpm = HyperRateValue();
                 BPM = bpm;
                 mainMenuSelecting.statusDevice.text = "Device Connected";
                 mainMenuSelecting.statusDevice.color = Color.green;

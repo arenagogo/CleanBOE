@@ -56015,7 +56015,7 @@ MonoBehaviour:
   isVideoActive: 0
   effectManager: {fileID: 538524442}
   emotSementara: 65
-  testEmot: 1
+  testEmot: 0
 --- !u!1 &1572246805
 GameObject:
   m_ObjectHideFlags: 0
@@ -57869,6 +57869,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f33b900dcca6fc4c82cf333a5489d4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testing: 0
   mainMenuSelecting: {fileID: 1747921549}
   websocketToken: rbxGLZq3SgcXP8FIO7PqmlE8bqm98I07gb6gMRkCVE3YSJy1o5Mn7wZjkBpS2diU
   bpm: 
